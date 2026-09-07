@@ -1,3 +1,4 @@
+import json
 import os
 from typing import NamedTuple
 
@@ -32,8 +33,13 @@ async def _fetch_identity(
     try:
         response = await client.get(f"{base_url.rstrip(chr(47))}/v1/identity")
         response.raise_for_status()
-        return {"repository": peer.repository, "identity": response.json()}
-    except httpx.HTTPError as error:
+        identity_data = response.json()
+        if not isinstance(identity_data, dict) or not isinstance(
+            identity_data.get("repository"), str
+        ):
+            raise ValueError("invalid peer identity payload")
+        return {"repository": peer.repository, "identity": identity_data}
+    except (httpx.HTTPError, json.JSONDecodeError, ValueError) as error:
         return {
             "repository": peer.repository,
             "status": "unavailable",
