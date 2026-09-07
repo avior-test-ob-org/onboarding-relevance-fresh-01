@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 from typing import NamedTuple
@@ -50,4 +51,6 @@ async def _fetch_identity(
 @app.get("/v1/peer-identities")
 async def peer_identities() -> list[dict[str, object]]:
     async with httpx.AsyncClient(timeout=2.0) as client:
-        return [await _fetch_identity(client, peer) for peer in PEERS]
+        return list(
+            await asyncio.gather(*(_fetch_identity(client, peer) for peer in PEERS))
+        )
